@@ -9,3 +9,23 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+### Bill's attempt of merging the data
+```{r}
+sales <- read.csv("sales data-set.csv")
+stores <- read.csv("stores data-set.csv")
+features <- read.csv("Features data set.csv")
+
+library(dplyr)
+data <- left_join(sales,stores,by = "Store")
+data <- left_join(data, features, by = c("Store"="Store", "Date"="Date", "IsHoliday"="IsHoliday"))
+data$Date <- as.factor(data$Date)
+data$Store <- as.factor(data$Store)
+data$Dept <- as.factor(data$Dept)
+
+```
+
+
+```{r}
+summary(lm(Weekly_Sales ~ Store + Dept + IsHoliday, data))
+```
+
