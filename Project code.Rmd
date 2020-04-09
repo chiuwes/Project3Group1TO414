@@ -26,6 +26,6 @@ data$Dept <- as.factor(data$Dept)
 
 
 ```{r}
-summary(lm(Weekly_Sales ~ Store + Dept + IsHoliday, data))
+summary(lm(Weekly_Sales ~ Dept + IsHoliday + Type + Size + Temperature + Fuel_Price + CPI + Unemployment, data))
 ```
 
