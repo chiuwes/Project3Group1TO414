@@ -16,16 +16,22 @@ stores <- read.csv("stores data-set.csv")
 features <- read.csv("Features data set.csv")
 
 library(dplyr)
-data <- left_join(sales,stores,by = "Store")
-data <- left_join(data, features, by = c("Store"="Store", "Date"="Date", "IsHoliday"="IsHoliday"))
-data$Date <- as.factor(data$Date)
-data$Store <- as.factor(data$Store)
-data$Dept <- as.factor(data$Dept)
+combined_data <- left_join(sales,stores,by = "Store")
+combined_data <- left_join(combined_data, features, by = c("Store"="Store", "Date"="Date", "IsHoliday"="IsHoliday"))
+combined_data$Date <- as.factor(combined_data$Date)
+combined_data$Store <- as.factor(combined_data$Store)
+combined_data$Dept <- as.factor(combined_data$Dept)
 
 ```
 
 
 ```{r}
-summary(lm(Weekly_Sales ~ Dept + IsHoliday + Type + Size + Temperature + Fuel_Price + CPI + Unemployment, data))
+library(ggplot2)
+library(jtools)
+first_model <-lm(Weekly_Sales ~ Dept + IsHoliday + Type + Size + Temperature + Fuel_Price + CPI + Unemployment, combined_data)
+
+summary(first_model)
+
+effect_plot(first_model, pred = Size, interval = TRUE, plot.points = TRUE)
 ```
 
