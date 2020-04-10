@@ -19,8 +19,10 @@ library(dplyr)
 combined_data <- left_join(sales,stores,by = "Store")
 combined_data <- left_join(combined_data, features, by = c("Store"="Store", "Date"="Date", "IsHoliday"="IsHoliday"))
 combined_data$Date <- as.factor(combined_data$Date)
+## Factor month into a variable, and year into a separate variable (just the two years)
 combined_data$Store <- as.factor(combined_data$Store)
 combined_data$Dept <- as.factor(combined_data$Dept)
+## Find which departments have sales
 
 ```
 
@@ -32,6 +34,13 @@ first_model <-lm(Weekly_Sales ~ Dept + IsHoliday + Type + Size + Temperature + F
 
 summary(first_model)
 
-effect_plot(first_model, pred = Size, interval = TRUE, plot.points = TRUE)
+summary(combined_data$MarkDown1)
+## 1.Convert markdown to zero, 2.Convert to dummy variable (yes or no)
+
+
+## Questions
+## Affect of holidays on summer/winter, different depts
+
+##effect_plot(first_model, pred = Size, interval = TRUE, plot.points = TRUE)
 ```
 
