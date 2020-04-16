@@ -20,6 +20,11 @@ combined_data <- left_join(sales,stores,by = "Store")
 combined_data <- left_join(combined_data, features, by = c("Store"="Store", "Date"="Date", "IsHoliday"="IsHoliday"))
 combined_data$Date <- as.factor(combined_data$Date)
 ## Factor month into a variable, and year into a separate variable (just the two years)
+library(lubridate)
+combined_data$month <- month(combined_data$Date)
+## Year function did not work correctly for me so I had to get creative 
+combined_data$year <- as.factor(substring(as.character(combined_data$Date),7,10))
+
 combined_data$Store <- as.factor(combined_data$Store)
 combined_data$Dept <- as.factor(combined_data$Dept)
 ## Find which departments have sales
@@ -30,7 +35,7 @@ combined_data$Dept <- as.factor(combined_data$Dept)
 ```{r}
 library(ggplot2)
 library(jtools)
-first_model <-lm(Weekly_Sales ~ Dept + IsHoliday + Type + Size + Temperature + Fuel_Price + CPI + Unemployment, combined_data)
+first_model <-lm(Weekly_Sales ~ month + year + Dept + IsHoliday + Type + Size + Temperature + Fuel_Price + CPI + Unemployment, combined_data)
 
 summary(first_model)
 
