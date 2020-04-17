@@ -21,31 +21,58 @@ combined_data <- left_join(combined_data, features, by = c("Store"="Store", "Dat
 combined_data$Date <- as.factor(combined_data$Date)
 ## Factor month into a variable, and year into a separate variable (just the two years)
 library(lubridate)
-combined_data$month <- month(combined_data$Date)
+combined_data$month <- as.factor(month(combined_data$Date))
 ## Year function did not work correctly for me so I had to get creative 
 combined_data$year <- as.factor(substring(as.character(combined_data$Date),7,10))
 
 combined_data$Store <- as.factor(combined_data$Store)
 combined_data$Dept <- as.factor(combined_data$Dept)
-## Find which departments have sales
 
+
+## 1.Convert markdown to zero, 2.Convert to dummy variable (yes or no)
+combined_data$MarkDown1 <- ifelse(is.na(combined_data$MarkDown1),0, combined_data$MarkDown1)
+combined_data$MarkDown2 <- ifelse(is.na(combined_data$MarkDown2),0, combined_data$MarkDown2)
+combined_data$MarkDown3 <- ifelse(is.na(combined_data$MarkDown3),0, combined_data$MarkDown3)
+combined_data$MarkDown4 <- ifelse(is.na(combined_data$MarkDown4),0, combined_data$MarkDown4)
+combined_data$MarkDown5 <- ifelse(is.na(combined_data$MarkDown5),0, combined_data$MarkDown5)
+
+summary(combined_data)
+
+## Code to normalize all numeric and int data
+normalize <- function(x) {
+  return((x-min(x)) / (max(x) - min(x)))
+}
+
+combined_data <- as_data_frame(lapply(combined_data, function(x) {
+  if((class(x[1]) != "numeric") & (class(x[1]) != "integer")) {
+    return (x)
+  }
+  return(normalize(x))
+}))
+
+## Randomize data
+set.seed(42)
+combined_data <- sample_frac(combined_data, 1L)
+data_train <- combined_data[1:337256, ]
+data_test <- combined_data[337257:421570, ]
 ```
 
 
 ```{r}
 library(ggplot2)
 library(jtools)
-first_model <-lm(Weekly_Sales ~ month + year + Dept + IsHoliday + Type + Size + Temperature + Fuel_Price + CPI + Unemployment, combined_data)
+first_model <-lm(Weekly_Sales ~ month + year + Dept + IsHoliday + Type + Size + Temperature + Fuel_Price + CPI + Unemployment, data_train)
 
-summary(first_model)
+stepmodel <- step(first_model, direction = "backward")
 
-summary(combined_data$MarkDown1)
-## 1.Convert markdown to zero, 2.Convert to dummy variable (yes or no)
+summary(stepmodel)
+
 
 
 ## Questions
 ## Affect of holidays on summer/winter, different depts
 
-##effect_plot(first_model, pred = Size, interval = TRUE, plot.points = TRUE)
+## Find which departments have sales
+
 ```
 
