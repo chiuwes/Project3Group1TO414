@@ -43,7 +43,7 @@ normalize <- function(x) {
   return((x-min(x)) / (max(x) - min(x)))
 }
 
-combined_data <- as_data_frame(lapply(combined_data, function(x) {
+combined_data <- as.data.frame(lapply(combined_data, function(x) {
   if((class(x[1]) != "numeric") & (class(x[1]) != "integer")) {
     return (x)
   }
@@ -53,15 +53,15 @@ combined_data <- as_data_frame(lapply(combined_data, function(x) {
 ## Randomize data
 set.seed(42)
 combined_data <- sample_frac(combined_data, 1L)
-data_train <- combined_data[1:337256, ]
-data_test <- combined_data[337257:421570, ]
+salesdata_train <- combined_data[1:337256, ]
+salesdata_test <- combined_data[337257:421570, ]
 ```
 
 
 ```{r}
 library(ggplot2)
 library(jtools)
-first_model <-lm(Weekly_Sales ~ month + year + Dept + IsHoliday + Type + Size + Temperature + Fuel_Price + CPI + Unemployment, data_train)
+first_model <-lm(Weekly_Sales ~ month + year + Dept + IsHoliday + Type + Size + Temperature + Fuel_Price + CPI + Unemployment, salesdata_train)
 
 stepmodel <- step(first_model, direction = "backward")
 
@@ -73,6 +73,20 @@ summary(stepmodel)
 ## Affect of holidays on summer/winter, different depts
 
 ## Find which departments have sales
+
+```
+```{r}
+library(neuralnet)
+## Also create an ANN model to see how accurate it is
+## Create model matrix w/out store # or date
+salesdata_train$Store <- NULL
+salesdata_test$Store <- NULL
+salesdata_train$Date <- NULL
+salesdata_test$Date <- NULL
+salesmm_train <- as.data.frame(model.matrix(~ . -1, data= salesdata_train))
+salesmm_test <- as.data.frame(model.matrix(~ . -1, data = salesdata_test))
+
+ANNmodel <- neuralnet(formula = Weekly_Sales ~ ., data = salesmm_train)
 
 ```
 
