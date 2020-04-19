@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-### Bill's attempt of merging the data
+### Merge data
 ```{r}
 sales <- read.csv("sales data-set.csv")
 stores <- read.csv("stores data-set.csv")
@@ -37,7 +37,55 @@ combined_data$MarkDown4 <- ifelse(is.na(combined_data$MarkDown4),0, combined_dat
 combined_data$MarkDown5 <- ifelse(is.na(combined_data$MarkDown5),0, combined_data$MarkDown5)
 
 summary(combined_data)
+```
+## Preliminary Questions
 
+### Are there seasonal trends across the entire retail chain?
+```{r}
+## First, sum all sales across all stores and departments by date
+sumsales <- as.data.frame(aggregate(combined_data$Weekly_Sales, by=list(Date=combined_data$Date), FUN=sum))
+sumsales$Date <- dmy(sumsales$Date)
+sumsales <- sumsales[order(sumsales$Date),]
+
+plot(sumsales$Date, sumsales$x, type = "l", main = "Weekly Sales Across Stores", xlab = "Date", ylab = "Weekly Sales")
+
+## We can see that there is a yearly trend of sales across the retail chain, which suggests to us that sales data can be represented with a model that takes month as one of the variables. 
+
+
+```
+
+### Affect of Holidays on Different Departments
+To analyze the affect of holidays across different departments, we were able to aggregate data into the categories of departments, and our holiday dummy variable. Note that we used the mean weekly sales rather than total month sales or sum of sales. This is because for every month there are less holiday weeks than there are normal weeks.
+  From our analysis, we found that there is a net positive impact of holidays in the big picture. Though, it seems to be high variance in the differences, with not much less than 50% of departments negatively impacted by holidays.
+```{r}
+### Aggregating Data on by Department and Holiday dummy variable
+group <- data.frame(as.integer(combined_data$Dept),as.integer(combined_data$IsHoliday),combined_data$Weekly_Sales)
+group <- setNames(group, c("Dept", "IsHoliday","Weekly_Sales"))
+
+group <- group %>%
+  group_by(Dept, IsHoliday) 
+
+group <- summarise(group,mean(Weekly_Sales))
+group <- setNames(group, c("Dept", "IsHoliday","MeanSales"))
+
+### Calculating the change in mean weekly sales during holidays
+coord <- seq(1,nrow(group),2)
+group$MeanSales[coord] <- -group$MeanSales[coord] ## We make non-holiday (odd) sale rows negative, so these sales will be subtracted from holiday mean sales (to get delta sales) when we sum them together.
+
+differences <- sort(tapply(group$MeanSales,group$Dept,sum),TRUE)
+impact <- as.factor(ifelse(differences>0, "Positive", "Negative")) ##Positive means a sales change above zero.
+
+table(impact)
+prop.table(table(impact)) 
+
+summary(differences) #As you can see, the median and mean is above zero. So on average, holidays tend to benefit our departments.
+
+barplot(head(differences), xlab="Department Number", ylab="Change in Mean Weekly Sales on Holidays", main="Top 5 Positively-Impacted Departments") 
+barplot(tail(differences), xlab="Department Number", ylab="Change in Mean Weekly Sales on Holidays", main="Worst 5 Negatively-Impacted Departments")
+```
+## Build predictive model
+
+```{r}
 ## Code to normalize all numeric and int data
 normalize <- function(x) {
   return((x-min(x)) / (max(x) - min(x)))
@@ -55,19 +103,6 @@ set.seed(42)
 combined_data <- sample_frac(combined_data, 1L)
 salesdata_train <- combined_data[1:337256, ]
 salesdata_test <- combined_data[337257:421570, ]
-```
-```{r}
-
-## Preliminary Questions
-## Are there seasonal trends across the entire retail chain?
-
-## Do holidays in the summer/winter have different numbers of sales?
-
-## Do different depts have different proportions of markdowns?
-
-## Find which departments have sales
-
-
 ```
 
 ```{r}
@@ -91,8 +126,8 @@ summary(salesdata_test$diff)
 sd(salesdata_test$diff)
 ## From this plot and the summary, we see that the linear model predicts sales pretty well. We see that the average is around 0, with a stdev of .0199 normalized. In actual numbers, this is an average of 72, with a stdev of 8902, which is more than we would like in a reliable model. Therefore, our team decided to make an ANN model to see if it would be more accurate.
 
-
 ```
+
 ```{r}
 library(neuralnet)
 ## Also create an ANN model to see how accurate it is
