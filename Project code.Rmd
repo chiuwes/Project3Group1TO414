@@ -56,23 +56,41 @@ combined_data <- sample_frac(combined_data, 1L)
 salesdata_train <- combined_data[1:337256, ]
 salesdata_test <- combined_data[337257:421570, ]
 ```
+```{r}
 
+## Preliminary Questions
+## Are there seasonal trends across the entire retail chain?
+
+## Do holidays in the summer/winter have different numbers of sales?
+
+## Do different depts have different proportions of markdowns?
+
+## Find which departments have sales
+
+
+```
 
 ```{r}
 library(ggplot2)
 library(jtools)
+library(lmtest)
 first_model <-lm(Weekly_Sales ~ month + year + Dept + IsHoliday + Type + Size + Temperature + Fuel_Price + CPI + Unemployment, salesdata_train)
 
 stepmodel <- step(first_model, direction = "backward")
 
 summary(stepmodel)
 
+## The low p-value shows that this is a statistically significant model, but the adjusted r-squared value of .6279 suggests that the linear regression might not be the best model. 
 
+## Plot a graph to see how well the model predicts data
+salesdata_test$predict <- predict(stepmodel, newdata = salesdata_test)
+salesdata_test$diff <- salesdata_test$Weekly_Sales - salesdata_test$predict
 
-## Questions
-## Affect of holidays on summer/winter, different depts
+plot(salesdata_test$diff, type = "h", ylim = c(-.2,.2), main = "Plot of residual data", ylab = "Residuals")
+summary(salesdata_test$diff)
+sd(salesdata_test$diff)
+## From this plot and the summary, we see that the linear model predicts sales pretty well. We see that the average is around 0, with a stdev of .0199 normalized. In actual numbers, this is an average of 72, with a stdev of 8902, which is more than we would like in a reliable model. Therefore, our team decided to make an ANN model to see if it would be more accurate.
 
-## Find which departments have sales
 
 ```
 ```{r}
@@ -83,10 +101,35 @@ salesdata_train$Store <- NULL
 salesdata_test$Store <- NULL
 salesdata_train$Date <- NULL
 salesdata_test$Date <- NULL
-salesmm_train <- as.data.frame(model.matrix(~ . -1, data= salesdata_train))
-salesmm_test <- as.data.frame(model.matrix(~ . -1, data = salesdata_test))
+salesmm_train <- as.data.frame(model.matrix(~ . -1, data= salesdata_train[1:3000,]))
+salesmm_test <- as.data.frame(model.matrix(~ . -1, data = salesdata_test[1:300,]))
+## ANN model was not working with full set of data, so I shrunk it
 
 ANNmodel <- neuralnet(formula = Weekly_Sales ~ ., data = salesmm_train)
 
+ANNresults <- compute(ANNmodel, salesmm_test)
+ANNstrength <- ANNresults$net.result
+
+salesmm_test$predict <- ANNstrength
+salesmm_test$diff <- salesmm_test$Weekly_Sales - salesmm_test$predict
+plot(salesmm_test$diff, type = "h", ylim = c(-.2,.2), main = "Plot of residual data", ylab = "Residuals")
+summary(salesmm_test$diff)
+sd(salesmm_test$diff)
+
+## We can see that even with this smaller set of data, the ANN model performs better than the linear model, while the average difference is further from 0, the standard deviation is lower. I will now attempt to improve the ANN model to prove that with the same number of data points, the ANN model would work better than the linear model. 
+ANNmodel2 <- neuralnet(formula = Weekly_Sales ~ ., data = salesmm_train, hidden = 2)
+
+ANNresults2 <- compute(ANNmodel2, salesmm_test)
+ANNstrength2 <- ANNresults2$net.result
+
+salesmm_test$predict <- ANNstrength2
+salesmm_test$diff <- salesmm_test$Weekly_Sales - salesmm_test$predict
+plot(salesmm_test$diff, type = "h", ylim = c(-.2,.2), main = "Plot of residual data", ylab = "Residuals")
+summary(salesmm_test$diff)
+sd(salesmm_test$diff)
+
+## From this model, we see that the average has been pulled closer to 0, and the stdev is even lower. As we learned in class, the ANN model scales exceptionally well with large amounts of data, so given more time to process, we believe that this model would be an accurate choice for predicting weekly sales. 
+
 ```
+
 
