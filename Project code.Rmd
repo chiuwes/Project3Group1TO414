@@ -152,7 +152,7 @@ summary(salesmm_test$diff)
 sd(salesmm_test$diff)
 
 ## We can see that even with this smaller set of data, the ANN model performs better than the linear model, while the average difference is further from 0, the standard deviation is lower. I will now attempt to improve the ANN model to prove that with the same number of data points, the ANN model would work better than the linear model. 
-ANNmodel2 <- neuralnet(formula = Weekly_Sales ~ ., data = salesmm_train, hidden = 2)
+ANNmodel2 <- neuralnet(formula = Weekly_Sales ~ ., data = salesmm_train, hidden = 3)
 
 ANNresults2 <- compute(ANNmodel2, salesmm_test)
 ANNstrength2 <- ANNresults2$net.result
@@ -163,7 +163,7 @@ plot(salesmm_test$diff, type = "h", ylim = c(-.2,.2), main = "Plot of residual d
 summary(salesmm_test$diff)
 sd(salesmm_test$diff)
 
-## From this model, we see that the average has been pulled closer to 0, and the stdev is even lower. As we learned in class, the ANN model scales exceptionally well with large amounts of data, so given more time to process, we believe that this model would be an accurate choice for predicting weekly sales. 
+## We get a very interesting result from this model. We see that the mean and median have been pulled closer to 0, but the standard deviation has actually increased. Still, though, the standard deviation is less than that of the linear model, and we are using a dataset that is much smaller. If we had more runtime, and could use all the data, due to how well aNN scales, we believe that the aNN model would drastically outperform the linear one. 
 
 ```
 
